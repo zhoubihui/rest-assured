@@ -926,6 +926,12 @@ class RequestSpecificationImpl implements FilterableRequestSpecification, Groovy
   }
 
   RequestSpecification sessionId(String sessionIdValue) {
+    /*
+      1、首先判断RestAssuredConfig是否有设置
+        1) 如果没有设置，则取默认的sessionIdName=JSESSIONID;
+        2) 如果有设置，则从RestAssuredConfig中取出sessionIdName;
+      2、调用重载的sessionId(sessionIdName, sessionIdValue)方法
+    */
     def sessionIdName = config == null ? SessionConfig.DEFAULT_SESSION_ID_NAME : config.getSessionConfig().sessionIdName()
     sessionId(sessionIdName, sessionIdValue)
   }
@@ -933,6 +939,11 @@ class RequestSpecificationImpl implements FilterableRequestSpecification, Groovy
   RequestSpecification sessionId(String sessionIdName, String sessionIdValue) {
     notNull(sessionIdName, "Session id name")
     notNull(sessionIdValue, "Session id value")
+    /*
+      1、判断cookies中是否存在name=sessionIdName的cookie
+        1) 如果不存在，则将sessionIdName和sessionIdValue添加到cookies中;
+        2) 如果存在，则更新对应cookie的value值
+    */
     if (cookies.hasCookieWithName(sessionIdName)) {
       def allOtherCookies = cookies.findAll { !it.getName().equalsIgnoreCase(sessionIdName) }
       allOtherCookies.add(new Cookie.Builder(sessionIdName, sessionIdValue).build());
